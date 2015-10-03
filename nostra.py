@@ -7,6 +7,10 @@ import json
 
 #import requests.packages.urllib3 #lol
 #requests.packages.urllib3.disable_warnings() #lol hackathon
+import os
+if not os.path.exists("data"):
+	os.makedirs("data")
+
 
 #following br setup code from http://stockrt.github.io/p/emulating-a-browser-in-python-with-mechanize/
 # Browser
@@ -39,11 +43,11 @@ br.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Ge
                  ('Connection', 'keep-alive')]
 
 
-index_page = br.open("https://www.predictit.org/Browse/Featured")
-html = index_page.read()
+#index_page = br.open("https://www.predictit.org/Browse/Featured")
+#html = index_page.read()
 
-soup = bs4.BeautifulSoup(html)
-print(soup.find("Greece"))
+#soup = bs4.BeautifulSoup(html)
+#print(soup.find("Greece"))
 
 def login():
 	pass
@@ -78,5 +82,27 @@ class stock:
 		#self.parse(soup)
 	def parse(self, soup):
 		pass
+	def save(self, save_dir = "data"):
+		#make the directory "/data"
+		with open("{}/{}.json".format(save_dir, self.contract_id), 'w') as f:
+			json.dump(self.data, f)
+
+def get_repubs():
+	repubs = []
+	#index_page = br.open("https://www.predictit.org/Market/1233/Who-will-win-the-2016-Republican-presidential-nomination")
+	index_page = "https://www.predictit.org/Home/GetContractListAjax?marketId=1233"
+	soup = bs4.BeautifulSoup(index_page.read())
+	candidate_names = soup.findAll('h4')
+	for i in candidate_names:
+		print(candidate_names)
+
+def save_all(start_at = 432, end_at = 1500):
+	import time
+	import random
+	for i in range(start_at, end_at):
+		x = stock(contract_id = i)
+		x.save()
+		time.sleep(random.random() + 0.7)
 
 b = stock(contract_id = "523")
+get_repubs()

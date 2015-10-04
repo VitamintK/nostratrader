@@ -8,6 +8,7 @@
   "dependencies": {
     "async": "^1.4.2",
     "cfenv": "^1.0.2",
+    "csv": "^0.4.6",
     "express": "^4.12.4",
     "request": "^2.64.0"
   },

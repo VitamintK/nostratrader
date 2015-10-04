@@ -8,7 +8,7 @@
 // for more info, see: http://expressjs.com
 var express = require('express');
 var request = require('request');
-var async   = require('async');
+var async = require('async');
 
 // cfenv provides access to your Cloud Foundry environment
 // for more info, see: https://www.npmjs.com/package/cfenv
@@ -24,13 +24,39 @@ app.use(express.static(__dirname + '/public'));
 var appEnv = cfenv.getAppEnv();
 
 // start server on the specified port and binding host
-app.listen(appEnv.port, function() {
+app.listen(appEnv.port, function () {
 
-	// print a message when the server starts listening
-  console.log("server starting on " + appEnv.url);
+    // print a message when the server starts listening
+    console.log("server starting on " + appEnv.url);
 });
+console.log("present");
+var d = new Date();
+d.setDate(d.getDate() - 1);
+console.log(d);
+console.log(d < new Date());
+var today = new Date()
+//for (var i = d; i < new Date(); i.setHours(i.getHours() + 1)) {
+//    console.log(i);
+//    var dateplushour = new Date(i);
+//    dateplushour.setHours(i.getHours() + 1);
+//    console.log(dateplushour);
+//    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplushour)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplushour)));
+//}
 
-function getCorrelation(pUrl, nUrl){
+nintydays = new Date(today)
+nintydays.setDate(today.getDate() - 90)
+for (var i = nintydays; i < new Date(); i.setDate(i.getDate() + 1)) {
+    console.log(i);
+    var dateplusday = new Date(i);
+    dateplusday.setDate(i.getDate() + 1);
+    console.log(dateplusday);
+    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplusday)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplusday)));
+}
+
+function getCorrelation(pUrl, nUrl) {
+
+    console.log(pUrl);
+    console.log(nUrl);
 
     var positive, negative;
 
@@ -40,39 +66,39 @@ function getCorrelation(pUrl, nUrl){
             nUrl
         ],
         makeRequest,
-        function(error, results){
+        function (error, results) {
 
-            if(error){
+            if (error) {
                 console.log("Shit broke");
-            }
-            else{
+            } else {
+
+                console.log(positive)
 
                 positive = JSON.parse(results[0]);
                 negative = JSON.parse(results[1]);
 
                 console.log("Correlation");
                 console.log("Positive: ", positive.search.results);
-                console.log("Negative: ",negative.search.results);
-                console.log("RESULTS: ", positive.search.results/negative.search.results);
+                console.log("Negative: ", negative.search.results);
+                console.log("RESULTS: ", positive.search.results / negative.search.results);
 
             }
 
         });
 
 }
-getCorrelation(urlConstruct('Obama', 'positive', '2015-10-02T16:00;00Z', '2015-10-02T15:00;00Z'), urlConstruct());
 
-function makeRequest(url, cb){
 
-    request.get( url ,
-        function(error, response, body){
+function makeRequest(url, cb) {
 
-            if(error){
+    request.get(url,
+        function (error, response, body) {
+
+            if (error) {
 
                 cb(error);
 
-            }
-            else{
+            } else {
 
                 cb(error, body)
 
@@ -80,19 +106,20 @@ function makeRequest(url, cb){
         });
 }
 
-function urlConstruct(subject, sentiment, start, end){
+function urlConstruct(subject, sentiment, start, end) {
 
-    return "https://163ab45d-44d2-4be8-a963-389217922b17:0E3JTtCiGn@cdeservice.mybluemix.net:443/api/v1/messages/count?q=" + subject + " sentiment:" + sentiment +" posted:" + start + "," + end;
+    return "https://163ab45d-44d2-4be8-a963-389217922b17:0E3JTtCiGn@cdeservice.mybluemix.net:443/api/v1/messages/count?q=" + subject + " sentiment:" + sentiment + " posted:" + start + "," + end;
 
 }
 
-function formatDate(date){
+function formatDate(date) {
+    console.log("This is date:" + date);
 
     var year = date.getFullYear();
-    var month = (date.getMonth() < 9) ? "0" + date.getMonth() + 1: date.getMonth() + 1;
-    var day = (date.getDate() < 10) ? "0" + date.getDate(): date.getDate();
-    var hours = (date.getHours() < 10) ? "0" + date.getHours(): date.getHours();
-    var minutes = (date.getMinutes() < 10) ? "0" + date.getMinutes(): date.getMinutes();
+    var month = (date.getMonth() < 9) ? "0" + date.getMonth() + 1 : date.getMonth() + 1;
+    var day = (date.getDate() < 10) ? "0" + date.getDate() : date.getDate();
+    var hours = (date.getHours() < 10) ? "0" + date.getHours() : date.getHours();
+    var minutes = (date.getMinutes() < 10) ? "0" + date.getMinutes() : date.getMinutes();
 
     return year + "-" + month + "-" + day + "T" + hours + ":" + minutes + ":00Z"
 

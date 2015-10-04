@@ -6,6 +6,7 @@ import mechanize
 import cookielib
 import json
 import time
+import config
 
 #import requests.packages.urllib3 #lol
 #requests.packages.urllib3.disable_warnings() #lol hackathon
@@ -135,19 +136,52 @@ b = stock(contract_id = "523")
 #for r in rs:
 #	r.save('data/r')
 
-def leggo():
+def login():
 	p = br.open("https://www.predictit.org/")
 	with open("yolo.txt", 'w') as f:
 		f.write(p.read())
 	x = br.follow_link(br.find_link(url='#SignInModal'))
 	with open("yolomodal", "w") as f:
 		f.write(x.read())
-	print(x.read())
-	print(x.read() == p.read())
+	#print(x.read())
+	#print(x.read() == p.read())
 	for form in br.forms():
 		if form.attrs.get('id') == 'loginForm':
 			br.form = form
-	print(br.form)
-	for control in br.form.controls:
-		print(control)
-leggo()
+	#print(br.form)
+	#for control in br.form.controls:
+#		print(control)
+	br.form["Email"] = config.email
+	br.form["Password"] = config.password
+	response = br.submit()
+	print(response.read())
+
+
+login()
+
+def buy_stock(contract_id):
+	import urllib
+
+	print(cj)
+	request = mechanize.Request("https://www.predictit.org/Contract/{}".format(contract_id))
+	response = br.open(request)#, data=dat)
+	
+	k = br.open("https://www.predictit.org/Trade/LoadShort?contractId=1277")
+	s = bs4.BeautifulSoup(k.read())
+	vtoken = s.find('input', attrs = {'name':'__RequestVerificationToken'}).get('value')
+	
+	params = {u'__RequestVerificationToken': vtoken, u'TradeType': 0, u'Quantity': 1, u'ContractId': 1277, u'PricePerShare': 0.59, u'X-Requested-With': 'XMLHttpRequest'}
+	dat = urllib.urlencode(params)
+	request = mechanize.Request("https://www.predictit.org/Trade/ConfirmTrade")
+	response = br.open(request, data = dat)
+
+	vtoken = s.find('input', attrs = {'name':'__RequestVerificationToken'}).get('value')
+	params = {u'__RequestVerificationToken': vtoken, u'BuySellViewModel.TradeType': 0, u'BuySellViewModel.Quantity': 1, u'BuySellViewModel.ContractId': 1277, u'BuySellViewModel.PricePerShare': 0.59, u'X-Requested-With': 'XMLHttpRequest'}
+	dat = urllib.urlencode(params)
+	request = mechanize.Request("https://www.predictit.org/Trade/SubmitTrade")
+	response = br.open(request, data = dat)
+
+
+	
+
+s = buy_stock('1277')

@@ -1,9 +1,11 @@
 #Python 2 project because Mechanize
+#to-do: follow_link or click_link instead of open
 import requests
 import bs4
 import mechanize
 import cookielib
 import json
+import time
 
 #import requests.packages.urllib3 #lol
 #requests.packages.urllib3.disable_warnings() #lol hackathon
@@ -69,6 +71,7 @@ class stock:
 			self.link = link
 			link_parts = [x.lower() for x in link.split('/')]
 			self.contract_id = link_parts[link_parts.index('contract')+1]
+			#print(self.contract_id)
 		else:
 			raise TypeError
 		url_data = "{}{}&timespan={}".format(stock.base_data, self.contract_id, "90D")
@@ -88,13 +91,36 @@ class stock:
 			json.dump(self.data, f)
 
 def get_repubs():
-	repubs = []
+	if not os.path.exists("data/r"):
+		os.makedirs("data/r")
+	repubs = dict()
 	#index_page = br.open("https://www.predictit.org/Market/1233/Who-will-win-the-2016-Republican-presidential-nomination")
-	index_page = "https://www.predictit.org/Home/GetContractListAjax?marketId=1233"
+	index_page = br.open("https://www.predictit.org/Home/GetContractListAjax?marketId=1233")
 	soup = bs4.BeautifulSoup(index_page.read())
-	candidate_names = soup.findAll('h4')
-	for i in candidate_names:
-		print(candidate_names)
+	candidates = soup.findAll('tr')
+	h = 0
+	for i in candidates[1:]:
+		candidate = dict()
+		try:
+			candidate['name'] = i.find("h4").text
+		except AttributeError: #rewrite this if there can be a table row that we want that comes after a table row without an h4
+			break
+		candidate['link'] = "https://www.predictit.org" + i.find('a')['href']
+		for price, key in zip(i.findAll('td')[-4:], ['BuyY', 'SellY', 'BuyN', 'SellN']):
+			candidate[key] = price.text.strip().rstrip(u'\xa2') #strip the cent sign.
+		print(candidate)
+		#repubs.append(candidate)
+		repubs[candidate['name']] = (stock(link=candidate['link']))
+		time.sleep(0.5)
+	csv = "name," + ",".join([str(x) for x in list(range(90))]) + "\n"
+	for name, data in repubs.items():
+		row = [name]+[datapoint["PricePerShare"] for datapoint in data.data]
+		csv+= ",".join([str(x) for x in row]) + "\n"
+	with open("data/r/repubs.csv", 'w') as f:
+		f.write(csv)
+	return repubs
+
+		
 
 def save_all(start_at = 432, end_at = 1500):
 	import time
@@ -105,4 +131,23 @@ def save_all(start_at = 432, end_at = 1500):
 		time.sleep(random.random() + 0.7)
 
 b = stock(contract_id = "523")
-get_repubs()
+#rs = get_repubs()
+#for r in rs:
+#	r.save('data/r')
+
+def leggo():
+	p = br.open("https://www.predictit.org/")
+	with open("yolo.txt", 'w') as f:
+		f.write(p.read())
+	x = br.follow_link(br.find_link(url='#SignInModal'))
+	with open("yolomodal", "w") as f:
+		f.write(x.read())
+	print(x.read())
+	print(x.read() == p.read())
+	for form in br.forms():
+		if form.attrs.get('id') == 'loginForm':
+			br.form = form
+	print(br.form)
+	for control in br.form.controls:
+		print(control)
+leggo()

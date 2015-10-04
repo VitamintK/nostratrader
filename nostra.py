@@ -7,6 +7,7 @@ import cookielib
 import json
 import time
 import config
+import urllib
 
 #import requests.packages.urllib3 #lol
 #requests.packages.urllib3.disable_warnings() #lol hackathon
@@ -123,12 +124,12 @@ def get_repubs():
 
 		
 
-def save_all(start_at = 432, end_at = 1500):
+def save_all(start_at = 432, end_at = 1500, save_dir="data"):
 	import time
 	import random
 	for i in range(start_at, end_at):
 		x = stock(contract_id = i)
-		x.save()
+		x.save(save_dir)
 		time.sleep(random.random() + 0.7)
 
 b = stock(contract_id = "523")
@@ -159,27 +160,31 @@ def login():
 
 login()
 
-def buy_stock(contract_id):
-	import urllib
-
+def buy_stock(contract_id, quantity, yes, price):
+	"""yes is 1 if the stock is "yes stock" and is 0 if the stock is "no stock" """
+	if type(yes) == bool:
+		yes = int(yes)
 	print(cj)
 	request = mechanize.Request("https://www.predictit.org/Contract/{}".format(contract_id))
 	response = br.open(request)#, data=dat)
 	
-	k = br.open("https://www.predictit.org/Trade/LoadShort?contractId=1277")
+	k = br.open("https://www.predictit.org/Trade/LoadShort?contractId={}".format(contract_id))
 	s = bs4.BeautifulSoup(k.read())
 	vtoken = s.find('input', attrs = {'name':'__RequestVerificationToken'}).get('value')
 	
-	params = {u'__RequestVerificationToken': vtoken, u'TradeType': 0, u'Quantity': 1, u'ContractId': 1277, u'PricePerShare': 0.59, u'X-Requested-With': 'XMLHttpRequest'}
+	params = {u'__RequestVerificationToken': vtoken, u'TradeType': yes, u'Quantity': quantity, u'ContractId': contract_id, u'PricePerShare': price, u'X-Requested-With': 'XMLHttpRequest'}
 	dat = urllib.urlencode(params)
 	request = mechanize.Request("https://www.predictit.org/Trade/ConfirmTrade")
 	response = br.open(request, data = dat)
 
 	vtoken = s.find('input', attrs = {'name':'__RequestVerificationToken'}).get('value')
-	params = {u'__RequestVerificationToken': vtoken, u'BuySellViewModel.TradeType': 0, u'BuySellViewModel.Quantity': 1, u'BuySellViewModel.ContractId': 1277, u'BuySellViewModel.PricePerShare': 0.59, u'X-Requested-With': 'XMLHttpRequest'}
+	params = {u'__RequestVerificationToken': vtoken, u'BuySellViewModel.TradeType': yes, u'BuySellViewModel.Quantity': quantity, u'BuySellViewModel.ContractId': contract_id, u'BuySellViewModel.PricePerShare': price, u'X-Requested-With': 'XMLHttpRequest'}
 	dat = urllib.urlencode(params)
 	request = mechanize.Request("https://www.predictit.org/Trade/SubmitTrade")
 	response = br.open(request, data = dat)
+
+def all_in(contract_id, yes):
+	import urllib
 
 
 	

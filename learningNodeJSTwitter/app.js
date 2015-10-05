@@ -5,6 +5,8 @@
 //------------------------------------------------------------------------------
 
 // This application uses express as its web server
+//var csv = require('csv');
+myList = [];
 // for more info, see: http://expressjs.com
 var express = require('express');
 var request = require('request');
@@ -32,31 +34,32 @@ app.listen(appEnv.port, function () {
 console.log("present");
 var d = new Date();
 d.setDate(d.getDate() - 1);
-console.log(d);
-console.log(d < new Date());
+//console.log(d);
+//console.log(d < new Date());
 var today = new Date()
-//for (var i = d; i < new Date(); i.setHours(i.getHours() + 1)) {
-//    console.log(i);
-//    var dateplushour = new Date(i);
-//    dateplushour.setHours(i.getHours() + 1);
-//    console.log(dateplushour);
-//    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplushour)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplushour)));
-//}
+    //for (var i = d; i < new Date(); i.setHours(i.getHours() + 1)) {
+    //    //console.log(i);
+    //    var dateplushour = new Date(i);
+    //    dateplushour.setHours(i.getHours() + 1);
+    //    //console.log(dateplushour);
+    //    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplushour)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplushour)));
+    //}
 
 nintydays = new Date(today)
 nintydays.setDate(today.getDate() - 90)
-for (var i = nintydays; i < new Date(); i.setDate(i.getDate() + 1)) {
+for (var i = new Date(nintydays); i < new Date(); i.setDate(i.getDate() + 1)) {
     console.log(i);
     var dateplusday = new Date(i);
     dateplusday.setDate(i.getDate() + 1);
-    console.log(dateplusday);
-    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplusday)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplusday)));
+    //console.log("This date is important" + formatDate(i));
+    var IHateAsync = new Date(i)
+    getCorrelation(urlConstruct('Obama', 'positive', formatDate(i), formatDate(dateplusday)), urlConstruct('Obama', 'negative', formatDate(i), formatDate(dateplusday)), IHateAsync);
 }
 
-function getCorrelation(pUrl, nUrl) {
+function getCorrelation(pUrl, nUrl, timestamp) {
 
-    console.log(pUrl);
-    console.log(nUrl);
+    //console.log(nUrl);
+    //console.log(nUrl);
 
     var positive, negative;
 
@@ -72,15 +75,17 @@ function getCorrelation(pUrl, nUrl) {
                 console.log("Shit broke");
             } else {
 
-                console.log(positive)
-
                 positive = JSON.parse(results[0]);
                 negative = JSON.parse(results[1]);
 
-                console.log("Correlation");
-                console.log("Positive: ", positive.search.results);
-                console.log("Negative: ", negative.search.results);
-                console.log("RESULTS: ", positive.search.results / negative.search.results);
+                //console.log(positive);
+
+                //                console.log("Correlation");
+                //                console.log("Positive: ", positive.search.results);
+                //                console.log("Negative: ", negative.search.results);
+                //                console.log("RESULTS: ", positive.search.results / negative.search.results);
+                myList.push([timestamp, positive.search.results / negative.search.results]);
+                console.log([timestamp, positive.search.results / negative.search.results]);
 
             }
 
@@ -113,10 +118,10 @@ function urlConstruct(subject, sentiment, start, end) {
 }
 
 function formatDate(date) {
-    console.log("This is date:" + date);
+    //console.log("This is date:" + date);
 
     var year = date.getFullYear();
-    var month = (date.getMonth() < 9) ? "0" + date.getMonth() + 1 : date.getMonth() + 1;
+    var month = (date.getMonth() < 9) ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
     var day = (date.getDate() < 10) ? "0" + date.getDate() : date.getDate();
     var hours = (date.getHours() < 10) ? "0" + date.getHours() : date.getHours();
     var minutes = (date.getMinutes() < 10) ? "0" + date.getMinutes() : date.getMinutes();

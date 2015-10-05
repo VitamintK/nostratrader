@@ -8,6 +8,7 @@ import json
 import time
 import config
 import urllib
+from math import copysign
 
 #import requests.packages.urllib3 #lol
 #requests.packages.urllib3.disable_warnings() #lol hackathon
@@ -61,14 +62,43 @@ def login():
 #contract = "{base}{contract_id}&timespan={days}".format(base=here, contract_id=contract_id, days="90D")
 #print(contract)
 #print(requests.get(contract).text)
+class Sentiment:
+	def __init__(self, *args):
+		#self.biden_positivity = requests.get("url goes here").text
+		self.positivity = 0.5
+	def hardcode_sentiment(self, hc):
+		self.positivity = hc
 
-class stock:
+class Trader:
+	def __init__(self, email, password):
+		self.login(email, password)
+	def login(self, email, password):
+		p = br.open("https://www.predictit.org/")
+		#with open("yolo.txt", 'w') as f:
+		#	f.write(p.read())
+		x = br.follow_link(br.find_link(url='#SignInModal'))
+		#with open("yolomodal", "w") as f:
+		#	f.write(x.read())
+		#print(x.read())
+		#print(x.read() == p.read())
+		for form in br.forms():
+			if form.attrs.get('id') == 'loginForm':
+				br.form = form
+		#print(br.form)
+		#for control in br.form.controls:
+	#		print(control)
+		br.form["Email"] = config.email
+		br.form["Password"] = config.password
+		response = br.submit()
+	#print(response.read())
+
+class Stock:
 	base_page = "https://www.predictit.org/Contract/"
 	base_data = 'https://www.predictit.org/Home/GetChartPriceData?contractId='
 	def __init__(self, link=None, contract_id=None):
 		if contract_id:
 			self.contract_id = str(contract_id)
-			self.link = "{}{}".format(stock.base_page, contract_id)
+			self.link = "{}{}".format(Stock.base_page, contract_id)
 		elif link:
 			self.link = link
 			link_parts = [x.lower() for x in link.split('/')]
@@ -76,21 +106,40 @@ class stock:
 			#print(self.contract_id)
 		else:
 			raise TypeError
-		url_data = "{}{}&timespan={}".format(stock.base_data, self.contract_id, "90D")
+		url_data = "{}{}&timespan={}".format(Stock.base_data, self.contract_id, "90D")
 		#print(url_data)
 		html_data = requests.get(url_data, verify=False).text
 		self.data = json.loads(html_data)
 		#self.url = link
-		#page = br.open(link)
-		#html = page.read()
-		#soup = bs4.BeautifulSoup(html)
-		#self.parse(soup)
+		########the stuff below was commented out earlier and I don't remember why so fuck hackathons
+		page = br.open(self.link)
+		html = page.read()
+		soup = bs4.BeautifulSoup(html)
+		self.parse(soup)
+		#########end stuff
+	#def refresh_page(self):
+	def refresh_and_parse(self):
+		page = br.open(self.link)
+		html = page.read()
+		soup = bs4.BeautifulSoup(html)
+		self.parse(soup)
 	def parse(self, soup):
-		pass
+		soup.find("div")
 	def save(self, save_dir = "data"):
 		#make the directory "/data"
 		with open("{}/{}.json".format(save_dir, self.contract_id), 'w') as f:
 			json.dump(self.data, f)
+	def trade_on_sentiment(self, contract_id, bluemix_sentiment):
+		current_price = 0.61
+		bluemix_sentiment = bluemix_sentiment.positivity
+		difference = bluemix_sentiment - current_price
+		amount_to_buy = abs(int(difference * 25))
+		yes = int(difference > 0)
+		#bluemix_sentiment
+		print("Bluemix sentiment is {}.  Current yes price is {}".format(bluemix_sentiment, current_price, int(bluemix_sentiment*5)))
+		print("Sentiment - Price = {}.  Buying {} {} stocks.".format(difference, abs(int(difference * 25)), ('NO', 'YES')[yes]))
+		buy_stock(contract_id, amount_to_buy, yes, current_price)
+
 
 def get_repubs():
 	if not os.path.exists("data/r"):
@@ -112,7 +161,7 @@ def get_repubs():
 			candidate[key] = price.text.strip().rstrip(u'\xa2') #strip the cent sign.
 		print(candidate)
 		#repubs.append(candidate)
-		repubs[candidate['name']] = (stock(link=candidate['link']))
+		repubs[candidate['name']] = (Stock(link=candidate['link']))
 		time.sleep(0.5)
 	csv = "name," + ",".join([str(x) for x in list(range(90))]) + "\n"
 	for name, data in repubs.items():
@@ -128,22 +177,22 @@ def save_all(start_at = 432, end_at = 1500, save_dir="data"):
 	import time
 	import random
 	for i in range(start_at, end_at):
-		x = stock(contract_id = i)
+		x = Stock(contract_id = i)
 		x.save(save_dir)
 		time.sleep(random.random() + 0.7)
 
-b = stock(contract_id = "523")
+b = Stock(contract_id = "523")
 #rs = get_repubs()
 #for r in rs:
 #	r.save('data/r')
 
 def login():
 	p = br.open("https://www.predictit.org/")
-	with open("yolo.txt", 'w') as f:
-		f.write(p.read())
+	#with open("yolo.txt", 'w') as f:
+	#	f.write(p.read())
 	x = br.follow_link(br.find_link(url='#SignInModal'))
-	with open("yolomodal", "w") as f:
-		f.write(x.read())
+	#with open("yolomodal", "w") as f:
+	#	f.write(x.read())
 	#print(x.read())
 	#print(x.read() == p.read())
 	for form in br.forms():
@@ -155,7 +204,7 @@ def login():
 	br.form["Email"] = config.email
 	br.form["Password"] = config.password
 	response = br.submit()
-	print(response.read())
+	#print(response.read())
 
 
 login()
@@ -164,7 +213,7 @@ def buy_stock(contract_id, quantity, yes, price):
 	"""yes is 1 if the stock is "yes stock" and is 0 if the stock is "no stock" """
 	if type(yes) == bool:
 		yes = int(yes)
-	print(cj)
+	#print(cj)
 	request = mechanize.Request("https://www.predictit.org/Contract/{}".format(contract_id))
 	response = br.open(request)#, data=dat)
 	
@@ -182,11 +231,33 @@ def buy_stock(contract_id, quantity, yes, price):
 	dat = urllib.urlencode(params)
 	request = mechanize.Request("https://www.predictit.org/Trade/SubmitTrade")
 	response = br.open(request, data = dat)
+	print("bought {} {} stock of {} for ${} each.".format(quantity, ('NO', 'YES')[yes], contract_id, price))
 
 def all_in(contract_id, yes):
 	import urllib
-
-
+	request = mechanize.Request("https://www.predictit.org/Contract/{}".format(contract_id))
+	response = br.open(request)#, data=dat)
 	
+	soup = bs4.BeautifulSoup(response.read())
+	prices = soup.find('div', _class="panel-body offers")
+	print(prices.text)
 
-s = buy_stock('1277')
+
+
+def trade_on_sentiment(contract_id, bluemix_sentiment):
+	current_price = 0.61
+	bluemix_sentiment = bluemix_sentiment.positivity
+	difference = bluemix_sentiment - current_price
+	amount_to_buy = abs(int(difference * 25))
+	yes = int(difference > 0)
+	#bluemix_sentiment
+	print("Bluemix sentiment is {}.  Current yes price is {}".format(bluemix_sentiment, current_price, int(bluemix_sentiment*5)))
+	print("Sentiment - Price = {}.  Buying {} {} stocks.".format(difference, abs(int(difference * 25)), ('NO', 'YES')[yes]))
+	buy_stock(contract_id, amount_to_buy, yes, current_price)
+
+
+#all_in('1277', 0)
+biden_positivity = Sentiment('Biden, running')
+trade_on_sentiment(1277, bluemix_sentiment=biden_positivity)
+
+#s = buy_stock('1277', 1, 0, 0.57)
